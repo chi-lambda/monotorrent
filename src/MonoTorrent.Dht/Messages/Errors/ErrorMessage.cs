@@ -82,7 +82,7 @@ namespace MonoTorrent.Dht.Messages
         {
             base.Handle(engine, node);
 
-            throw new MessageException(ErrorCode, Message);
+            //throw new MessageException(ErrorCode, Message);
         }
     }
 }

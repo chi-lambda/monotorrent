@@ -95,7 +95,7 @@ namespace MonoTorrent.Client
         internal int MaxPendingRequests { get; set; }
         internal int MaxSupportedPendingRequests { get; set; }
         public ConnectionMonitor Monitor { get; }
-        internal Peer Peer { get; set; }
+        public Peer Peer { get; set; }
         internal PeerExchangeManager PeerExchangeManager { get; set; }
         public string PeerID => Peer.PeerId;
         public int PiecesSent { get; internal set; }

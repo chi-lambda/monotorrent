@@ -1,7 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using MonoTorrent.Common;
+using System.Collections.Generic;
 
 namespace MonoTorrent.Client
 {
@@ -35,8 +33,9 @@ namespace MonoTorrent.Client
         {
             get
             {
-                return (int)ClientEngine.MainLoop.QueueWait(() => {
-                    return Toolbox.Count<Peer>(ActivePeers, delegate(Peer p) { return !p.IsSeeder; });
+                return (int)ClientEngine.MainLoop.QueueWait(() =>
+                {
+                    return Toolbox.Count(ActivePeers, p => !p.IsSeeder);
                 });
             }
         }
@@ -49,8 +48,9 @@ namespace MonoTorrent.Client
         {
             get
             {
-                return (int)ClientEngine.MainLoop.QueueWait(() => {
-                    return Toolbox.Count<Peer>(ActivePeers, delegate(Peer p) { return p.IsSeeder; });
+                return (int)ClientEngine.MainLoop.QueueWait(() =>
+                {
+                    return Toolbox.Count(ActivePeers, p => p.IsSeeder);
                 });
             }
         }
@@ -76,16 +76,24 @@ namespace MonoTorrent.Client
         internal IEnumerable<Peer> AllPeers()
         {
             for (int i = 0; i < AvailablePeers.Count; i++)
+            {
                 yield return AvailablePeers[i];
+            }
 
             for (int i = 0; i < ActivePeers.Count; i++)
+            {
                 yield return ActivePeers[i];
+            }
 
             for (int i = 0; i < BannedPeers.Count; i++)
+            {
                 yield return BannedPeers[i];
+            }
 
             for (int i = 0; i < BusyPeers.Count; i++)
+            {
                 yield return BusyPeers[i];
+            }
         }
 
         internal void ClearAll()
@@ -99,8 +107,12 @@ namespace MonoTorrent.Client
         internal bool Contains(Peer peer)
         {
             foreach (Peer other in AllPeers())
+            {
                 if (peer.Equals(other))
+                {
                     return true;
+                }
+            }
 
             return false;
         }

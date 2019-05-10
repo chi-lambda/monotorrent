@@ -30,8 +30,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.IO;
 
 namespace MonoTorrent.BEncoding
 {
@@ -69,8 +67,10 @@ namespace MonoTorrent.BEncoding
         public BEncodedList(IEnumerable<BEncodedValue> list)
         {
             if (list == null)
+            {
                 throw new ArgumentNullException("list");
- 
+            }
+
             this.list = new List<BEncodedValue>(list);
         }
 
@@ -97,7 +97,10 @@ namespace MonoTorrent.BEncoding
             buffer[offset] = (byte)'l';
             written++;
             for (int i = 0; i < this.list.Count; i++)
+            {
                 written += this.list[i].Encode(buffer, offset + written);
+            }
+
             buffer[offset + written] = (byte)'e';
             written++;
             return written;
@@ -110,13 +113,19 @@ namespace MonoTorrent.BEncoding
         internal override void DecodeInternal(RawReader reader)
         {
             if (reader.ReadByte() != 'l')                            // Remove the leading 'l'
+            {
                 throw new BEncodingException("Invalid data found. Aborting");
+            }
 
             while ((reader.PeekByte() != -1) && (reader.PeekByte() != 'e'))
+            {
                 list.Add(BEncodedValue.Decode(reader));
+            }
 
             if (reader.ReadByte() != 'e')                            // Remove the trailing 'e'
+            {
                 throw new BEncodingException("Invalid data found. Aborting");
+            }
         }
         #endregion
 
@@ -131,8 +140,10 @@ namespace MonoTorrent.BEncoding
             int length = 0;
 
             length += 1;   // Lists start with 'l'
-            for (int i=0; i < this.list.Count; i++)
+            for (int i = 0; i < this.list.Count; i++)
+            {
                 length += this.list[i].LengthInBytes();
+            }
 
             length += 1;   // Lists end with 'e'
             return length;
@@ -146,11 +157,17 @@ namespace MonoTorrent.BEncoding
             BEncodedList other = obj as BEncodedList;
 
             if (other == null)
+            {
                 return false;
+            }
 
             for (int i = 0; i < this.list.Count; i++)
+            {
                 if (!this.list[i].Equals(other.list[i]))
+                {
                     return false;
+                }
+            }
 
             return true;
         }
@@ -160,7 +177,9 @@ namespace MonoTorrent.BEncoding
         {
             int result = 0;
             for (int i = 0; i < list.Count; i++)
+            {
                 result ^= list[i].GetHashCode();
+            }
 
             return result;
         }
@@ -179,9 +198,9 @@ namespace MonoTorrent.BEncoding
             this.list.Add(item);
         }
 
-        public void AddRange (IEnumerable<BEncodedValue> collection)
+        public void AddRange(IEnumerable<BEncodedValue> collection)
         {
-            list.AddRange (collection);
+            list.AddRange(collection);
         }
 
         public void Clear()

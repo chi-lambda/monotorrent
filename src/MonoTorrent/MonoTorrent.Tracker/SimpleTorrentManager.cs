@@ -246,8 +246,8 @@ namespace MonoTorrent.Tracker
                     incomplete++;
             }
 
-            this.complete.number = complete;
-            this.incomplete.number = incomplete;
+            this.complete.Number = complete;
+            this.incomplete.Number = incomplete;
         }
 
         /// <summary>

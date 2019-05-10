@@ -23,13 +23,13 @@ namespace SampleClient
             this.CanScrape = false;
         }
 
-        public override Task AnnounceAsync(AnnounceParameters parameters, object state)
+        public override Task AnnounceAsync(AnnounceParameters parameters, TrackerConnectionID state)
         {
             RaiseAnnounceComplete(new AnnounceResponseEventArgs(this, state, true));
             return Task.CompletedTask;
         }
 
-        public override Task ScrapeAsync(ScrapeParameters parameters, object state)
+        public override Task ScrapeAsync(ScrapeParameters parameters, TrackerConnectionID state)
         {
             RaiseScrapeComplete(new ScrapeResponseEventArgs(this, state, true));
             return Task.CompletedTask;

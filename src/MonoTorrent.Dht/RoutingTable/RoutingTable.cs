@@ -29,12 +29,8 @@
 
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-
-using Mono.Math;
 using System.Net;
-using MonoTorrent.BEncoding;
 
 
 namespace MonoTorrent.Dht
@@ -64,7 +60,9 @@ namespace MonoTorrent.Dht
         public RoutingTable(Node localNode)
         {
             if (localNode == null)
+            {
                 throw new ArgumentNullException("localNode");
+            }
 
             this.localNode = localNode;
             localNode.Seen();
@@ -79,16 +77,24 @@ namespace MonoTorrent.Dht
         private bool Add(Node node, bool raiseNodeAdded)
         {
             if (node == null)
+            {
                 throw new ArgumentNullException("node");
+            }
 
-            Bucket bucket = buckets.Find(delegate(Bucket b) { return b.CanContain(node); });
-            if (bucket.Nodes.Contains(node))
+            Bucket bucket = buckets.Find(delegate (Bucket b) { return b.CanContain(node); });
+            if (bucket != null && bucket.Nodes.Contains(node))
+            {
                 return false;
+            }
 
             bool added = bucket.Add(node);
             if (!added && bucket.CanContain(LocalNode))
+            {
                 if (Split(bucket))
+                {
                     return Add(node, raiseNodeAdded);
+                }
+            }
 
             return added;
         }
@@ -102,9 +108,15 @@ namespace MonoTorrent.Dht
         internal Node FindNode(NodeId id)
         {
             foreach (Bucket b in this.buckets)
+            {
                 foreach (Node n in b.Nodes)
+                {
                     if (n.Id.Equals(id))
+                    {
                         return n;
+                    }
+                }
+            }
 
             return null;
         }
@@ -117,8 +129,10 @@ namespace MonoTorrent.Dht
         private bool Split(Bucket bucket)
         {
             if (bucket.Max - bucket.Min < Bucket.MaxCapacity)
+            {
                 return false;//to avoid infinit loop when add same node
-            
+            }
+
             NodeId median = (bucket.Min + bucket.Max) / 2;
             Bucket left = new Bucket(bucket.Min, median);
             Bucket right = new Bucket(median, bucket.Max);
@@ -128,10 +142,14 @@ namespace MonoTorrent.Dht
             Add(right);
 
             foreach (Node n in bucket.Nodes)
+            {
                 Add(n, false);
+            }
 
             if (bucket.Replacement != null)
+            {
                 Add(bucket.Replacement, false);
+            }
 
             return true;
         }
@@ -140,15 +158,18 @@ namespace MonoTorrent.Dht
         {
             int r = 0;
             foreach (Bucket b in buckets)
+            {
                 r += b.Nodes.Count;
-            return r;            
+            }
+
+            return r;
         }
 
-        
+
         public List<Node> GetClosest(NodeId target)
         {
-            SortedList<NodeId,Node> sortedNodes = new SortedList<NodeId,Node>(Bucket.MaxCapacity);
-						
+            SortedList<NodeId, Node> sortedNodes = new SortedList<NodeId, Node>(Bucket.MaxCapacity);
+
             foreach (Bucket b in this.buckets)
             {
                 foreach (Node n in b.Nodes)
@@ -156,10 +177,12 @@ namespace MonoTorrent.Dht
                     NodeId distance = n.Id.Xor(target);
                     if (sortedNodes.Count == Bucket.MaxCapacity)
                     {
-                        if (distance > sortedNodes.Keys[sortedNodes.Count-1])//maxdistance
+                        if (distance > sortedNodes.Keys[sortedNodes.Count - 1])//maxdistance
+                        {
                             continue;
+                        }
                         //remove last (with the maximum distance)
-                        sortedNodes.RemoveAt(sortedNodes.Count-1);						
+                        sortedNodes.RemoveAt(sortedNodes.Count - 1);
                     }
                     sortedNodes.Add(distance, n);
                 }

@@ -23,7 +23,7 @@ namespace MonoTorrent.Client.Tracker
             CanAnnounce = true;
         }
 
-        public override async Task AnnounceAsync (AnnounceParameters parameters, object state)
+        public override async Task AnnounceAsync (AnnounceParameters parameters, TrackerConnectionID state)
         {
             try {
                 if (ConnectionIdTask == null || LastConnected.Elapsed > TimeSpan.FromMinutes (1))
@@ -41,7 +41,7 @@ namespace MonoTorrent.Client.Tracker
             }
         }
 
-        public override async Task ScrapeAsync (ScrapeParameters parameters, object state)
+        public override async Task ScrapeAsync (ScrapeParameters parameters, TrackerConnectionID state)
         {
             try {
                 if (ConnectionIdTask == null || LastConnected.Elapsed > TimeSpan.FromMinutes (1))

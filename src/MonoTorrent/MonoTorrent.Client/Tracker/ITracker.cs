@@ -25,7 +25,7 @@ namespace MonoTorrent.Client.Tracker
         Uri Uri { get; }
         string WarningMessage { get; }
 
-        void Announce(AnnounceParameters parameters, object state);
-        void Scrape(ScrapeParameters parameters, object state);
+        void Announce(AnnounceParameters parameters, TrackerConnectionID state);
+        void Scrape(ScrapeParameters parameters, TrackerConnectionID state);
     }
 }

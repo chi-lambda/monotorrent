@@ -38,15 +38,11 @@ namespace MonoTorrent.Client.Tracker
             protected set { tracker = value; }
         }
 
-        protected TrackerResponseEventArgs(Tracker tracker, object state, bool successful)
+        protected TrackerResponseEventArgs(Tracker tracker, TrackerConnectionID state, bool successful)
         {
-            if (tracker == null)
-                throw new ArgumentNullException("tracker");
-            if (!(state is TrackerConnectionID))
-                throw new ArgumentException("The state object must be the same object as in the call to Announce", "state");
+            this.tracker = tracker ?? throw new ArgumentNullException("tracker");
             this.id = (TrackerConnectionID)state;
             this.successful = successful;
-            this.tracker = tracker;
         }
     }
 }

@@ -30,7 +30,6 @@
 
 using System;
 using System.IO;
-using System.Text;
 
 namespace MonoTorrent.BEncoding
 {
@@ -49,7 +48,9 @@ namespace MonoTorrent.BEncoding
         {
             byte[] buffer = new byte[LengthInBytes()];
             if (Encode(buffer, 0) != buffer.Length)
+            {
                 throw new BEncodingException("Error encoding the data");
+            }
 
             return buffer;
         }
@@ -63,11 +64,11 @@ namespace MonoTorrent.BEncoding
         /// <returns></returns>
         public abstract int Encode(byte[] buffer, int offset);
 
-        public static T Clone <T> (T value)
+        public static T Clone<T>(T value)
             where T : BEncodedValue
         {
-            Check.Value (value);
-            return (T) BEncodedValue.Decode (value.Encode ());
+            Check.Value(value);
+            return (T)BEncodedValue.Decode(value.Encode());
         }
 
         /// <summary>
@@ -78,10 +79,14 @@ namespace MonoTorrent.BEncoding
         public static BEncodedValue Decode(byte[] data)
         {
             if (data == null)
+            {
                 throw new ArgumentNullException("data");
+            }
 
             using (RawReader stream = new RawReader(new MemoryStream(data)))
-                return (Decode(stream));
+            {
+                return Decode(stream);
+            }
         }
 
         internal static BEncodedValue Decode(byte[] buffer, bool strictDecoding)
@@ -104,16 +109,24 @@ namespace MonoTorrent.BEncoding
         public static BEncodedValue Decode(byte[] buffer, int offset, int length, bool strictDecoding)
         {
             if (buffer == null)
+            {
                 throw new ArgumentNullException("buffer");
+            }
 
             if (offset < 0 || length < 0)
+            {
                 throw new IndexOutOfRangeException("Neither offset or length can be less than zero");
+            }
 
             if (offset > buffer.Length - length)
+            {
                 throw new ArgumentOutOfRangeException("length");
+            }
 
             using (RawReader reader = new RawReader(new MemoryStream(buffer, offset, length), strictDecoding))
-                return (BEncodedValue.Decode(reader));
+            {
+                return BEncodedValue.Decode(reader);
+            }
         }
 
 
@@ -125,7 +138,9 @@ namespace MonoTorrent.BEncoding
         public static BEncodedValue Decode(Stream stream)
         {
             if (stream == null)
+            {
                 throw new ArgumentNullException("stream");
+            }
 
             return Decode(new RawReader(stream));
         }
@@ -139,33 +154,35 @@ namespace MonoTorrent.BEncoding
         public static BEncodedValue Decode(RawReader reader)
         {
             if (reader == null)
+            {
                 throw new ArgumentNullException("reader");
+            }
 
             BEncodedValue data;
             switch (reader.PeekByte())
             {
-                case ('i'):                         // Integer
+                case 'i':                         // Integer
                     data = new BEncodedNumber();
                     break;
 
-                case ('d'):                         // Dictionary
+                case 'd':                         // Dictionary
                     data = new BEncodedDictionary();
                     break;
 
-                case ('l'):                         // List
+                case 'l':                         // List
                     data = new BEncodedList();
                     break;
 
-                case ('1'):                         // String
-                case ('2'):
-                case ('3'):
-                case ('4'):
-                case ('5'):
-                case ('6'):
-                case ('7'):
-                case ('8'):
-                case ('9'):
-                case ('0'):
+                case '1':                         // String
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                case '0':
                     data = new BEncodedString();
                     break;
 

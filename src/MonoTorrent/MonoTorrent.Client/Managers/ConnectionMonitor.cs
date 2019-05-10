@@ -28,30 +28,34 @@
 
 
 
-using System;
-using System.Net.Sockets;
 using MonoTorrent.Common;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace MonoTorrent.Client
 {
     /// <summary>
     /// This class is used to track upload/download speed and bytes uploaded/downloaded for each connection
     /// </summary>
-    public class ConnectionMonitor
+    public class ConnectionMonitor : INotifyPropertyChanged
     {
         #region Member Variables
 
-        public SpeedMonitor DataDown { get; }
-        public SpeedMonitor DataUp { get; }
-        public SpeedMonitor ProtocolDown { get; }
-        public SpeedMonitor ProtocolUp { get; }
+        private object locker = new object();
 
         #endregion Member Variables
 
 
         #region Public Properties
 
-        public long DataBytesDownloaded
+              public SpeedMonitor DataDown { get; }
+        public SpeedMonitor DataUp { get; }
+        public SpeedMonitor ProtocolDown { get; }
+        public SpeedMonitor ProtocolUp { get; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+  public long DataBytesDownloaded
         {
             get { return DataDown.Total; }
         }
@@ -95,15 +99,49 @@ namespace MonoTorrent.Client
         internal ConnectionMonitor(int averagingPeriod)
         {
             DataDown = new SpeedMonitor(averagingPeriod);
+            DataDown.PropertyChanged += (object sender, PropertyChangedEventArgs e) => NotifyPropertyChanged(nameof(DownloadSpeed));
             DataUp = new SpeedMonitor(averagingPeriod);
+            DataDown.PropertyChanged += (object sender, PropertyChangedEventArgs e) => NotifyPropertyChanged(nameof(UploadSpeed));
             ProtocolDown = new SpeedMonitor(averagingPeriod);
+            DataDown.PropertyChanged += (object sender, PropertyChangedEventArgs e) => NotifyPropertyChanged(nameof(DownloadSpeed));
             ProtocolUp = new SpeedMonitor(averagingPeriod);
+            DataDown.PropertyChanged += (object sender, PropertyChangedEventArgs e) => NotifyPropertyChanged(nameof(UploadSpeed));
         }
 
         #endregion
 
 
         #region Methods
+
+        internal void BytesSent(int bytesUploaded, TransferType type)
+        {
+            lock (locker)
+            {
+                if (type == TransferType.Data)
+                {
+                    DataUp.AddDelta(bytesUploaded);
+                }
+                else
+                {
+                    ProtocolUp.AddDelta(bytesUploaded);
+                }
+            }
+        }
+
+        internal void BytesReceived(int bytesDownloaded, TransferType type)
+        {
+            lock (locker)
+            {
+                if (type == TransferType.Data)
+                {
+                    DataDown.AddDelta(bytesDownloaded);
+                }
+                else
+                {
+                    ProtocolDown.AddDelta(bytesDownloaded);
+                }
+            }
+        }
 
         internal void Reset()
         {
@@ -119,6 +157,11 @@ namespace MonoTorrent.Client
             DataUp.Tick();
             ProtocolDown.Tick();
             ProtocolUp.Tick();
+        }
+
+        private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #endregion

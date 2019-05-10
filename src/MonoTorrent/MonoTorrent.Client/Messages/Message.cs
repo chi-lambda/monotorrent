@@ -29,8 +29,6 @@
 
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Net;
 
 namespace MonoTorrent.Client.Messages
@@ -42,7 +40,10 @@ namespace MonoTorrent.Client.Messages
         protected int CheckWritten(int written)
         {
             if (written != ByteLength)
+            {
                 throw new MessageException("Message encoded incorrectly. Incorrect number of bytes written");
+            }
+
             return written;
         }
 
@@ -188,7 +189,10 @@ namespace MonoTorrent.Client.Messages
         static public int WriteAscii(byte[] buffer, int offset, string text)
         {
             for (int i = 0; i < text.Length; i++)
+            {
                 Write(buffer, offset + i, (byte)text[i]);
+            }
+
             return text.Length;
         }
     }

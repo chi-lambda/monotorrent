@@ -1,15 +1,19 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonoTorrent", "MonoTorrent\MonoTorrent.csproj", "{411A9E0E-FDC6-4E25-828A-0C2CD1CD96F8}"
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.421
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MonoTorrent", "MonoTorrent\MonoTorrent.csproj", "{411A9E0E-FDC6-4E25-828A-0C2CD1CD96F8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonoTorrent.Dht", "MonoTorrent.Dht\MonoTorrent.Dht.csproj", "{7A2A7E73-FD43-4171-AA34-DA413D35459E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MonoTorrent.Dht", "MonoTorrent.Dht\MonoTorrent.Dht.csproj", "{7A2A7E73-FD43-4171-AA34-DA413D35459E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonoTorrent.Tests", "MonoTorrent.Tests\MonoTorrent.Tests.csproj", "{526928D8-DBC8-4717-BCF0-A4FEDA80A0BD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MonoTorrent.Tests", "MonoTorrent.Tests\MonoTorrent.Tests.csproj", "{526928D8-DBC8-4717-BCF0-A4FEDA80A0BD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleClient", "SampleClient\SampleClient.csproj", "{9CC2CC3A-4041-4857-AF8B-D58745FD3066}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleClient", "SampleClient\SampleClient.csproj", "{9CC2CC3A-4041-4857-AF8B-D58745FD3066}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackerApp", "TrackerApp\TrackerApp.csproj", "{7A647552-B5F0-419F-9395-4DC24990ED20}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrackerApp", "TrackerApp\TrackerApp.csproj", "{7A647552-B5F0-419F-9395-4DC24990ED20}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleClient.WPF", "SampleClient.WPF\SampleClient.WPF.csproj", "{84F4A5B5-057E-472A-957C-47AE3F676283}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetCoreSample", "DotNetCoreSample\DotNetCoreSample.csproj", "{603EDA39-A83F-48BE-A97A-193C28CAAE86}"
 EndProject
@@ -39,6 +43,10 @@ Global
 		{7A647552-B5F0-419F-9395-4DC24990ED20}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A647552-B5F0-419F-9395-4DC24990ED20}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A647552-B5F0-419F-9395-4DC24990ED20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84F4A5B5-057E-472A-957C-47AE3F676283}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84F4A5B5-057E-472A-957C-47AE3F676283}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84F4A5B5-057E-472A-957C-47AE3F676283}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84F4A5B5-057E-472A-957C-47AE3F676283}.Release|Any CPU.Build.0 = Release|Any CPU
 		{603EDA39-A83F-48BE-A97A-193C28CAAE86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{603EDA39-A83F-48BE-A97A-193C28CAAE86}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{603EDA39-A83F-48BE-A97A-193C28CAAE86}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -46,6 +54,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AA99E9F8-DFF2-4B34-928D-9485E0FA4440}
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = SampleClient\SampleClient.csproj

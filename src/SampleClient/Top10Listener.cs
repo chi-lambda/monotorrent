@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Diagnostics;
 using System.IO;
 
@@ -23,7 +21,9 @@ namespace MonoTorrent
         public override void Write(string message)
         {
             lock (traces)
+            {
                 traces.Last.Value += message;
+            }
         }
 
         public override void WriteLine(string message)
@@ -31,7 +31,9 @@ namespace MonoTorrent
             lock (traces)
             {
                 if (traces.Count >= capacity)
+                {
                     traces.RemoveFirst();
+                }
 
                 traces.AddLast(message);
             }
@@ -40,8 +42,12 @@ namespace MonoTorrent
         public void ExportTo(TextWriter output)
         {
             lock (traces)
+            {
                 foreach (string s in this.traces)
+                {
                     output.WriteLine(s);
+                }
+            }
         }
     }
 }

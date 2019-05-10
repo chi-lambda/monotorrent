@@ -117,7 +117,7 @@ namespace MonoTorrent.Client.Tracker
             this.uri = uri;
         }
 
-        public async void Announce(AnnounceParameters parameters, object state)
+        public async void Announce(AnnounceParameters parameters, TrackerConnectionID state)
         {
             try {
                 await AnnounceAsync (parameters, state);
@@ -126,7 +126,7 @@ namespace MonoTorrent.Client.Tracker
 			}
 		}
 
-        public async void Scrape(ScrapeParameters parameters, object state)
+        public async void Scrape(ScrapeParameters parameters, TrackerConnectionID state)
         {
             try {
                 await ScrapeAsync (parameters, state);
@@ -135,32 +135,24 @@ namespace MonoTorrent.Client.Tracker
             }
         }
 
-        public abstract Task AnnounceAsync (AnnounceParameters parameters, object state);
-        public abstract Task ScrapeAsync(ScrapeParameters parameters, object state);
+        public abstract Task AnnounceAsync (AnnounceParameters parameters, TrackerConnectionID state);
+        public abstract Task ScrapeAsync(ScrapeParameters parameters, TrackerConnectionID state);
 
         protected virtual void RaiseBeforeAnnounce()
         {
-            EventHandler h = BeforeAnnounce;
-            if (h != null)
-                h(this, EventArgs.Empty);
+            BeforeAnnounce?.Invoke(this, EventArgs.Empty);
         }
         protected virtual void RaiseAnnounceComplete(AnnounceResponseEventArgs e)
         {
-            EventHandler<AnnounceResponseEventArgs> h = AnnounceComplete;
-            if (h != null)
-                h(this, e);
+            AnnounceComplete?.Invoke(this, e);
         }
         protected virtual void RaiseBeforeScrape()
         {
-            EventHandler h = BeforeScrape;
-            if (h != null)
-                h(this, EventArgs.Empty);
+            BeforeScrape?.Invoke(this, EventArgs.Empty);
         }
         protected virtual void RaiseScrapeComplete(ScrapeResponseEventArgs e)
         {
-            EventHandler<ScrapeResponseEventArgs> h = ScrapeComplete;
-            if (h != null)
-                h(this, e);
+            ScrapeComplete?.Invoke(this, e);
         }
     }
 }

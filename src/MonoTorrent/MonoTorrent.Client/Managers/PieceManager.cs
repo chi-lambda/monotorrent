@@ -28,27 +28,23 @@
 
 
 
+using MonoTorrent.Client.Connections;
+using MonoTorrent.Client.Messages;
+using MonoTorrent.Client.Messages.Standard;
+using MonoTorrent.Common;
 using System;
 using System.Collections.Generic;
-using MonoTorrent.Common;
-using MonoTorrent.Client;
-using System.Threading;
-using MonoTorrent.Client.Messages.Standard;
-using MonoTorrent.Client.Messages.FastPeer;
-using MonoTorrent.Client.Messages;
-using MonoTorrent.Client.Connections;
-using System.Diagnostics;
 
 namespace MonoTorrent.Client
 {
     /// <summary>
     /// Contains the logic for choosing what piece to download next
     /// </summary>
-    public class PieceManager 
+    public class PieceManager
     {
         #region Old
         // For every 10 kB/sec upload a peer has, we request one extra piece above the standard amount him
-        internal const int BonusRequestPerKb = 10;  
+        internal const int BonusRequestPerKb = 10;
         internal const int NormalRequestAmount = 2;
         internal const int MaxEndGameRequests = 2;
 
@@ -87,13 +83,16 @@ namespace MonoTorrent.Client
             Piece piece;
             if (Picker.ValidatePiece(id, message.PieceIndex, message.StartOffset, message.RequestLength, out piece))
             {
-                id.LastBlockReceived.Restart ();
-                var block = piece.Blocks [message.StartOffset / Piece.BlockSize];
+                id.LastBlockReceived.Restart();
+                var block = piece.Blocks[message.StartOffset / Piece.BlockSize];
 
                 RaiseBlockReceived(new BlockEventArgs(id.TorrentManager, block, piece, id));
 
                 if (piece.AllBlocksReceived)
+                {
                     UnhashedPieces[message.PieceIndex] = true;
+                }
+
                 return piece;
             }
             return null;
@@ -105,7 +104,9 @@ namespace MonoTorrent.Client
             int maxRequests = id.MaxPendingRequests;
 
             if (id.AmRequestingPiecesCount >= maxRequests)
+            {
                 return;
+            }
 
             int count = 1;
             if (id.Connection is HttpConnection)
@@ -115,7 +116,7 @@ namespace MonoTorrent.Client
 
                 // Make sure we have at least one whole piece
                 count = Math.Max(count, 1);
-                
+
                 count *= id.TorrentManager.Torrent.PieceLength / Piece.BlockSize;
             }
 
@@ -125,10 +126,14 @@ namespace MonoTorrent.Client
                 {
                     msg = Picker.ContinueExistingRequest(id);
                     if (msg != null)
+                    {
                         id.Enqueue(msg);
+                    }
                     else
+                    {
                         break;
-                } 
+                    }
+                }
             }
 
             if (!id.IsChoking || (id.SupportsFastPeer && id.IsAllowedFastPieces.Count > 0))
@@ -137,9 +142,13 @@ namespace MonoTorrent.Client
                 {
                     msg = Picker.PickPiece(id, id.TorrentManager.Peers.ConnectedPeers, count);
                     if (msg != null)
+                    {
                         id.Enqueue(msg);
+                    }
                     else
+                    {
                         break;
+                    }
                 }
             }
         }
@@ -148,11 +157,15 @@ namespace MonoTorrent.Client
         {
             // If i have completed the torrent, then no-one is interesting
             if (id.TorrentManager.Complete)
+            {
                 return false;
+            }
 
             // If the peer is a seeder, then he is definately interesting
             if ((id.Peer.IsSeeder = id.BitField.AllTrue))
+            {
                 return true;
+            }
 
             // Otherwise we need to do a full check
             return Picker.IsInteresting(id.BitField);
@@ -161,7 +174,9 @@ namespace MonoTorrent.Client
         internal void ChangePicker(PiecePicker picker, BitField bitfield, TorrentFile[] files)
         {
             if (UnhashedPieces.Length != bitfield.Length)
+            {
                 UnhashedPieces = new BitField(bitfield.Length);
+            }
 
             picker = new IgnoringPicker(bitfield, picker);
             picker = new IgnoringPicker(UnhashedPieces, picker);
@@ -173,12 +188,12 @@ namespace MonoTorrent.Client
         internal void Reset()
         {
             UnhashedPieces.SetAll(false);
-            Picker?.Reset ();
+            Picker?.Reset();
         }
 
-        internal int CurrentRequestCount()
+        public int CurrentRequestCount()
         {
-            return (int)ClientEngine.MainLoop.QueueWait(delegate { return Picker.CurrentRequestCount(); });
+            return (int)ClientEngine.MainLoop.QueueWait(() => Picker.CurrentRequestCount());
         }
     }
 }

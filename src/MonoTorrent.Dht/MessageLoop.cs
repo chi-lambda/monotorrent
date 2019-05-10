@@ -28,17 +28,15 @@
 //
 
 
+using MonoTorrent.BEncoding;
+using MonoTorrent.Common;
+using MonoTorrent.Dht.Listeners;
+using MonoTorrent.Dht.Messages;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using MonoTorrent.Dht.Messages;
-using System.Threading;
-using System.Net.Sockets;
-using System.Net;
-using MonoTorrent.BEncoding;
-using MonoTorrent.Dht.Listeners;
-using MonoTorrent.Common;
 using System.Diagnostics;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace MonoTorrent.Dht
 {
@@ -46,14 +44,14 @@ namespace MonoTorrent.Dht
     {
         private struct SendDetails
         {
-            public SendDetails(IPEndPoint destination, Message message, System.Threading.Tasks.TaskCompletionSource<SendQueryEventArgs> tcs)
+            public SendDetails(IPEndPoint destination, Message message, TaskCompletionSource<SendQueryEventArgs> tcs)
             {
                 CompletionSource = tcs;
                 Destination = destination;
                 Message = message;
                 SentAt = DateTime.MinValue;
             }
-            public System.Threading.Tasks.TaskCompletionSource<SendQueryEventArgs> CompletionSource;
+            public TaskCompletionSource<SendQueryEventArgs> CompletionSource;
             public IPEndPoint Destination;
             public Message Message;
             public DateTime SentAt;
@@ -69,7 +67,7 @@ namespace MonoTorrent.Dht
         Queue<SendDetails> sendQueue = new Queue<SendDetails>();
         Queue<KeyValuePair<IPEndPoint, Message>> receiveQueue = new Queue<KeyValuePair<IPEndPoint, Message>>();
         MonoTorrentCollection<SendDetails> waitingResponse = new MonoTorrentCollection<SendDetails>();
-        
+
         private bool CanSend
         {
             get { return activeSends.Count < 5 && sendQueue.Count > 0 && (DateTime.Now - lastSent) > TimeSpan.FromMilliseconds(5); }
@@ -80,9 +78,13 @@ namespace MonoTorrent.Dht
             this.engine = engine;
             this.listener = listener;
             listener.MessageReceived += new MessageReceived(MessageReceived);
-            DhtEngine.MainLoop.QueueTimeout(TimeSpan.FromMilliseconds(5), delegate {
+            DhtEngine.MainLoop.QueueTimeout(TimeSpan.FromMilliseconds(5), () =>
+            {
                 if (engine.Disposed)
+                {
                     return false;
+                }
+
                 try
                 {
                     SendMessage();
@@ -110,7 +112,9 @@ namespace MonoTorrent.Dht
                 {
                     Message message;
                     if (MessageFactory.TryDecodeMessage((BEncodedDictionary)BEncodedValue.Decode(buffer, 0, buffer.Length, false), out message))
+                    {
                         receiveQueue.Enqueue(new KeyValuePair<IPEndPoint, Message>(endpoint, message));
+                    }
                 }
                 catch (MessageException ex)
                 {
@@ -128,14 +132,16 @@ namespace MonoTorrent.Dht
         private void RaiseMessageSent(IPEndPoint endpoint, QueryMessage query, ResponseMessage response)
         {
             //Console.WriteLine ("Query: {0}. Response: {1}. TimedOut: {2}", query.GetType ().Name, response?.GetType ().Name, response == null);
-            QuerySent?.Invoke (this, new SendQueryEventArgs(endpoint, query, response));
+            QuerySent?.Invoke(this, new SendQueryEventArgs(endpoint, query, response));
         }
 
         private void SendMessage()
         {
             SendDetails? send = null;
             if (CanSend)
+            {
                 send = sendQueue.Dequeue();
+            }
 
             if (send != null)
             {
@@ -143,7 +149,9 @@ namespace MonoTorrent.Dht
                 SendDetails details = send.Value;
                 details.SentAt = DateTime.UtcNow;
                 if (details.Message is QueryMessage)
+                {
                     waitingResponse.Add(details);
+                }
             }
 
         }
@@ -151,13 +159,17 @@ namespace MonoTorrent.Dht
         internal void Start()
         {
             if (listener.Status != ListenerStatus.Listening)
+            {
                 listener.Start();
+            }
         }
 
         internal void Stop()
         {
             if (listener.Status != ListenerStatus.NotListening)
+            {
                 listener.Stop();
+            }
         }
 
         private void TimeoutMessage()
@@ -169,8 +181,11 @@ namespace MonoTorrent.Dht
                     SendDetails details = waitingResponse.Dequeue();
                     MessageFactory.UnregisterSend((QueryMessage)details.Message);
                     if (details.CompletionSource != null)
-                        details.CompletionSource.TrySetResult (new SendQueryEventArgs (details.Destination, (QueryMessage)details.Message, null));
-                    RaiseMessageSent (details.Destination, (QueryMessage)details.Message, null);
+                    {
+                        details.CompletionSource.TrySetResult(new SendQueryEventArgs(details.Destination, (QueryMessage)details.Message, null));
+                    }
+
+                    RaiseMessageSent(details.Destination, (QueryMessage)details.Message, null);
                 }
             }
         }
@@ -178,16 +193,20 @@ namespace MonoTorrent.Dht
         private void ReceiveMessage()
         {
             if (receiveQueue.Count == 0)
+            {
                 return;
+            }
 
             KeyValuePair<IPEndPoint, Message> receive = receiveQueue.Dequeue();
             Message m = receive.Value;
             IPEndPoint source = receive.Key;
-            SendDetails query = default (SendDetails);
-            for (int i = 0; i < waitingResponse.Count; i++) {
-                if (waitingResponse [i].Message.TransactionId.Equals (m.TransactionId)) {
-                    query = waitingResponse [i];
-                    waitingResponse.RemoveAt (i--);
+            SendDetails query = default(SendDetails);
+            for (int i = 0; i < waitingResponse.Count; i++)
+            {
+                if (waitingResponse[i].Message.TransactionId.Equals(m.TransactionId))
+                {
+                    query = waitingResponse[i];
+                    waitingResponse.RemoveAt(i--);
                 }
             }
 
@@ -207,21 +226,30 @@ namespace MonoTorrent.Dht
                 if (response != null)
                 {
                     if (query.CompletionSource != null)
-                        query.CompletionSource.TrySetResult (new SendQueryEventArgs (node.EndPoint, response.Query, response));
-                    RaiseMessageSent (node.EndPoint, response.Query, response);
+                    {
+                        query.CompletionSource.TrySetResult(new SendQueryEventArgs(node.EndPoint, response.Query, response));
+                    }
+
+                    RaiseMessageSent(node.EndPoint, response.Query, response);
                 }
             }
             catch (MessageException ex)
             {
                 if (query.CompletionSource != null)
-                    query.CompletionSource.TrySetResult (new SendQueryEventArgs (query.Destination, (QueryMessage)query.Message, null));
+                {
+                    query.CompletionSource.TrySetResult(new SendQueryEventArgs(query.Destination, (QueryMessage)query.Message, null));
+                }
+
                 Console.WriteLine("Incoming message barfed: {0}", ex);
                 // Normal operation (FIXME: do i need to send a response error message?) 
             }
             catch (Exception ex)
             {
                 if (query.CompletionSource != null)
-                    query.CompletionSource.TrySetResult (new SendQueryEventArgs (query.Destination, (QueryMessage)query.Message, null));
+                {
+                    query.CompletionSource.TrySetResult(new SendQueryEventArgs(query.Destination, (QueryMessage)query.Message, null));
+                }
+
                 Console.WriteLine("Handle Error for message: {0}", ex);
                 this.EnqueueSend(new ErrorMessage(ErrorCode.GenericError, "Misshandle received message!"), source);
             }
@@ -235,36 +263,42 @@ namespace MonoTorrent.Dht
             listener.Send(buffer, endpoint);
         }
 
-        internal void EnqueueSend(Message message, IPEndPoint endpoint, System.Threading.Tasks.TaskCompletionSource<SendQueryEventArgs> tcs = null)
+        internal void EnqueueSend(Message message, IPEndPoint endpoint, TaskCompletionSource<SendQueryEventArgs> tcs = null)
         {
             lock (locker)
             {
                 if (message.TransactionId == null)
                 {
                     if (message is ResponseMessage)
+                    {
                         throw new ArgumentException("Message must have a transaction id");
-                    do {
+                    }
+
+                    do
+                    {
                         message.TransactionId = TransactionId.NextId();
                     } while (MessageFactory.IsRegistered(message.TransactionId));
                 }
 
                 // We need to be able to cancel a query message if we time out waiting for a response
                 if (message is QueryMessage)
+                {
                     MessageFactory.RegisterSend((QueryMessage)message);
+                }
 
                 sendQueue.Enqueue(new SendDetails(endpoint, message, tcs));
             }
         }
 
-        internal void EnqueueSend(Message message, Node node, System.Threading.Tasks.TaskCompletionSource<SendQueryEventArgs> tcs = null)
+        internal void EnqueueSend(Message message, Node node, TaskCompletionSource<SendQueryEventArgs> tcs = null)
         {
-            EnqueueSend (message, node.EndPoint, tcs);
+            EnqueueSend(message, node.EndPoint, tcs);
         }
 
-        public System.Threading.Tasks.Task<SendQueryEventArgs> SendAsync (Message message, Node node)
+        public Task<SendQueryEventArgs> SendAsync(Message message, Node node)
         {
-            var tcs = new System.Threading.Tasks.TaskCompletionSource<SendQueryEventArgs> ();
-            EnqueueSend (message, node, tcs);
+            var tcs = new TaskCompletionSource<SendQueryEventArgs>();
+            EnqueueSend(message, node, tcs);
             return tcs.Task;
         }
     }

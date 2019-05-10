@@ -98,6 +98,11 @@ namespace MonoTorrent.Dht.Messages
             message = null;
             error = null;
 
+            if (!dictionary.ContainsKey(MessageTypeKey))
+            {
+                return false;
+            }
+
             if (dictionary[MessageTypeKey].Equals(QueryMessage.QueryType))
             {
                 message = queryDecoders[(BEncodedString)dictionary[QueryNameKey]](dictionary);

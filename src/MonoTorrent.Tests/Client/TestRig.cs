@@ -77,7 +77,7 @@ namespace MonoTorrent.Client
             CanScrape = true;
         }
 
-        public override Task AnnounceAsync(AnnounceParameters parameters, object state)
+        public override Task AnnounceAsync(AnnounceParameters parameters, TrackerConnectionID state)
         {
             RaiseBeforeAnnounce();
             AnnouncedAt.Add(DateTime.Now);
@@ -85,7 +85,7 @@ namespace MonoTorrent.Client
             return Task.CompletedTask;
         }
 
-        public override Task ScrapeAsync(ScrapeParameters parameters, object state)
+        public override Task ScrapeAsync(ScrapeParameters parameters, TrackerConnectionID state)
         {
             RaiseBeforeScrape();
             ScrapedAt.Add(DateTime.Now);
@@ -451,7 +451,7 @@ namespace MonoTorrent.Client
             torrentDict = CreateTorrent(piecelength, files, tier);
             torrent = Torrent.Load(torrentDict);
             if (MetadataMode)
-                manager = new TorrentManager(torrent.infoHash, savePath, new TorrentSettings(), MetadataPath, new RawTrackerTiers ());
+                manager = new TorrentManager(torrent.InfoHash, savePath, new TorrentSettings(), MetadataPath, new RawTrackerTiers ());
             else
                 manager = new TorrentManager(torrent, savePath, new TorrentSettings());
             await engine.Register(manager);

@@ -71,7 +71,7 @@ namespace MonoTorrent.Client.Tracker
             Key = UriHelper.UrlEncode(passwordKey);
         }
 
-        public override async Task AnnounceAsync(AnnounceParameters parameters, object state)
+        public override async Task AnnounceAsync(AnnounceParameters parameters, TrackerConnectionID state)
         {
             try
             {
@@ -80,7 +80,8 @@ namespace MonoTorrent.Client.Tracker
                 request.UserAgent = MonoTorrent.Common.VersionInfo.ClientVersion;
                 request.Proxy = new WebProxy();   // If i don't do this, i can't run the webrequest. It's wierd.
                 RaiseBeforeAnnounce();
-                BeginRequest(request, AnnounceReceived, new object[] { request, state });
+                var response = await request.GetResponseAsync();
+                AnnounceReceived(response, state);
             }
             catch (Exception ex)
             {
@@ -91,28 +92,14 @@ namespace MonoTorrent.Client.Tracker
             }
         }
 
-        void BeginRequest(WebRequest request, AsyncCallback callback, object state)
-        {
-            IAsyncResult result = request.BeginGetResponse(callback, state);
-            ClientEngine.MainLoop.QueueTimeout(RequestTimeout, delegate
-            {
-                if (!result.IsCompleted)
-                    request.Abort();
-                return false;
-            });
-        }
-
-        void AnnounceReceived(IAsyncResult result)
+        void AnnounceReceived(WebResponse response, TrackerConnectionID state)
         {
             FailureMessage = "";
             WarningMessage = "";
-            object[] stateOb = (object[])result.AsyncState;
-            WebRequest request = (WebRequest)stateOb[0];
-            object state = stateOb[1];
             List<Peer> peers = new List<Peer>();
             try
             {
-                BEncodedDictionary dict = DecodeResponse(request, result);
+                BEncodedDictionary dict = DecodeResponse(response);
                 HandleAnnounce(dict, peers);
                 Status = TrackerState.Ok;
             }
@@ -169,13 +156,12 @@ namespace MonoTorrent.Client.Tracker
             return b.ToUri ();
         }
 
-        BEncodedDictionary DecodeResponse(WebRequest request, IAsyncResult result)
+        BEncodedDictionary DecodeResponse(WebResponse response)
         {
             int bytesRead = 0;
             int totalRead = 0;
             byte[] buffer = new byte[2048];
 
-            WebResponse response = request.EndGetResponse(result);
             using (MemoryStream dataStream = new MemoryStream(response.ContentLength > 0 ? (int)response.ContentLength : 256))
             {
 
@@ -273,7 +259,7 @@ namespace MonoTorrent.Client.Tracker
             }
         }
 
-        public override async Task ScrapeAsync(ScrapeParameters parameters, object state)
+        public override async Task ScrapeAsync(ScrapeParameters parameters, TrackerConnectionID state)
         {
             try
             {
@@ -287,7 +273,8 @@ namespace MonoTorrent.Client.Tracker
 
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
                 request.UserAgent = MonoTorrent.Common.VersionInfo.ClientVersion;
-                BeginRequest(request, ScrapeReceived, new object[] { request, state });
+                var response = await request.GetResponseAsync();
+                ScrapeReceived(response, state);
             }
             catch
             {
@@ -296,17 +283,14 @@ namespace MonoTorrent.Client.Tracker
             }
         }
 
-        void ScrapeReceived(IAsyncResult result)
+        void ScrapeReceived(WebResponse response, TrackerConnectionID state)
         {
             string message = "";
-            object[] stateOb = (object[])result.AsyncState;
-            WebRequest request = (WebRequest)stateOb[0];
-            object state = stateOb[1];
 
             try
             {
                 BEncodedDictionary d;
-                BEncodedDictionary dict = DecodeResponse(request, result);
+                BEncodedDictionary dict = DecodeResponse(response);
 
                 // FIXME: Log the failure?
                 if (!dict.ContainsKey("files"))

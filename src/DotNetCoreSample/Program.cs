@@ -94,13 +94,6 @@ namespace MonoTorrent
             dhtListner.Start();
             engine.DhtEngine.Start(nodes);
 
-            while (false) {
-                dht.PeersFound += (o, e) => Console.WriteLine(e.Peers.Count);
-                Console.ReadLine ();
-                var torrent111 = Torrent.Load(@"C:\Users\Alan\Desktop\monotorrent\build\Samples\Debug\Torrents\a.torrent");
-                dht.GetPeers (torrent111.InfoHash);
-            }
-
             // If the SavePath does not exist, we want to create it.
             if (!Directory.Exists(engine.Settings.SavePath))
                 Directory.CreateDirectory(engine.Settings.SavePath);
@@ -141,7 +134,7 @@ namespace MonoTorrent
                     // which you then register with the engine.
                     TorrentManager manager = new TorrentManager(torrent, downloadsPath, torrentDefaults);
                     if (fastResume.ContainsKey(torrent.InfoHash.ToHex ()))
-                        manager.LoadFastResume(new FastResume ((BEncodedDictionary)fastResume[torrent.infoHash.ToHex ()]));
+                        manager.LoadFastResume(new FastResume ((BEncodedDictionary)fastResume[torrent.InfoHash.ToHex ()]));
                     engine.Register(manager);
 
                     // Store the torrent manager in our list so we can access it later

@@ -29,9 +29,8 @@
 
 
 using System;
-using System.IO;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 
 namespace MonoTorrent.BEncoding
 {
@@ -42,20 +41,7 @@ namespace MonoTorrent.BEncoding
     {
         #region Member Variables
 
-        private SortedDictionary<BEncodedString, BEncodedValue> dictionary;
-
-        #endregion
-
-
-        #region Constructors
-
-        /// <summary>
-        /// Create a new BEncodedDictionary
-        /// </summary>
-        public BEncodedDictionary()
-        {
-            this.dictionary = new SortedDictionary<BEncodedString, BEncodedValue>();
-        }
+        private SortedDictionary<BEncodedString, BEncodedValue> dictionary = new SortedDictionary<BEncodedString, BEncodedValue>();
 
         #endregion
 
@@ -105,17 +91,23 @@ namespace MonoTorrent.BEncoding
             BEncodedString oldkey = null;
 
             if (reader.ReadByte() != 'd')
+            {
                 throw new BEncodingException("Invalid data found. Aborting"); // Remove the leading 'd'
+            }
 
             while ((reader.PeekByte() != -1) && (reader.PeekByte() != 'e'))
             {
                 key = (BEncodedString)BEncodedValue.Decode(reader);         // keys have to be BEncoded strings
 
                 if (oldkey != null && oldkey.CompareTo(key) > 0)
+                {
                     if (strictDecoding)
+                    {
                         throw new BEncodingException(String.Format(
                             "Illegal BEncodedDictionary. The attributes are not ordered correctly. Old key: {0}, New key: {1}",
                             oldkey, key));
+                    }
+                }
 
                 oldkey = key;
                 value = BEncodedValue.Decode(reader);                     // the value is a BEncoded value
@@ -123,7 +115,9 @@ namespace MonoTorrent.BEncoding
             }
 
             if (reader.ReadByte() != 'e')                                    // remove the trailing 'e'
+            {
                 throw new BEncodingException("Invalid data found. Aborting");
+            }
         }
 
         public static BEncodedDictionary DecodeTorrent(byte[] bytes)
@@ -148,7 +142,9 @@ namespace MonoTorrent.BEncoding
             BEncodedValue value = null;
             BEncodedDictionary torrent = new BEncodedDictionary();
             if (reader.ReadByte() != 'd')
+            {
                 throw new BEncodingException("Invalid data found. Aborting"); // Remove the leading 'd'
+            }
 
             while ((reader.PeekByte() != -1) && (reader.PeekByte() != 'e'))
             {
@@ -158,18 +154,26 @@ namespace MonoTorrent.BEncoding
                 {
                     value = new BEncodedDictionary();
                     if (key.Text.ToLower().Equals("info"))
+                    {
                         ((BEncodedDictionary)value).DecodeInternal(reader, true);
+                    }
                     else
+                    {
                         ((BEncodedDictionary)value).DecodeInternal(reader, false);
+                    }
                 }
                 else
+                {
                     value = BEncodedValue.Decode(reader);                     // the value is a BEncoded value
-                    
+                }
+
                 torrent.dictionary.Add(key, value);
             }
 
             if (reader.ReadByte() != 'e')                                    // remove the trailing 'e'
+            {
                 throw new BEncodingException("Invalid data found. Aborting");
+            }
 
             return torrent;
         }
@@ -206,18 +210,26 @@ namespace MonoTorrent.BEncoding
             BEncodedValue val;
             BEncodedDictionary other = obj as BEncodedDictionary;
             if (other == null)
+            {
                 return false;
+            }
 
             if (this.dictionary.Count != other.dictionary.Count)
+            {
                 return false;
+            }
 
             foreach (KeyValuePair<BEncodedString, BEncodedValue> keypair in this.dictionary)
             {
                 if (!other.TryGetValue(keypair.Key, out val))
+                {
                     return false;
+                }
 
                 if (!keypair.Value.Equals(val))
+                {
                     return false;
+                }
             }
 
             return true;
@@ -260,7 +272,9 @@ namespace MonoTorrent.BEncoding
         public bool Contains(KeyValuePair<BEncodedString, BEncodedValue> item)
         {
             if (!this.dictionary.ContainsKey(item.Key))
+            {
                 return false;
+            }
 
             return this.dictionary[item.Key].Equals(item.Value);
         }

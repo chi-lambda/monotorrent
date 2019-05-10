@@ -27,8 +27,6 @@
 //
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
 
 namespace MonoTorrent.BEncoding
@@ -38,55 +36,35 @@ namespace MonoTorrent.BEncoding
         bool hasPeek;
         Stream input;
         byte[] peeked;
-        bool strictDecoding;
 
-        public bool StrictDecoding
-        {
-            get { return strictDecoding; }
-        }
+        public bool StrictDecoding { get; }
 
-        public RawReader(Stream input)
-            : this(input, true)
-        {
-
-        }
+        public RawReader(Stream input) : this(input, true) { }
 
         public RawReader(Stream input, bool strictDecoding)
         {
             this.input = input;
             this.peeked = new byte[1];
-            this.strictDecoding = strictDecoding;
+            this.StrictDecoding = strictDecoding;
         }
 
-        public override bool CanRead
-        {
-            get { return input.CanRead; }
-        }
+        public override bool CanRead => input.CanRead;
 
-        public override bool CanSeek
-        {
-            get { return input.CanSeek; }
-        }
+        public override bool CanSeek => input.CanSeek;
 
-        public override bool CanWrite
-        {
-            get { return false; }
-        }
+        public override bool CanWrite => false;
 
-        public override void Flush()
-        {
-            throw new NotSupportedException();
-        }
+        public override void Flush() => throw new NotSupportedException();
 
-        public override long Length
-        {
-            get { return input.Length; }
-        }
+        public override long Length => input.Length;
 
         public int PeekByte()
         {
             if (!hasPeek)
+            {
                 hasPeek = Read(peeked, 0, 1) == 1;
+            }
+
             return hasPeek ? peeked[0] : -1;
         }
 
@@ -102,12 +80,7 @@ namespace MonoTorrent.BEncoding
 
         public override long Position
         {
-            get
-            {
-                if (hasPeek)
-                    return input.Position - 1;
-                return input.Position;
-            }
+            get => hasPeek ? input.Position - 1 : input.Position;
             set
             {
                 if (value != Position)
@@ -135,23 +108,13 @@ namespace MonoTorrent.BEncoding
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            long val;
-            if (hasPeek && origin == SeekOrigin.Current)
-                val = input.Seek(offset - 1, origin);
-            else
-                val = input.Seek(offset, origin);
+            long val = hasPeek && origin == SeekOrigin.Current ? input.Seek(offset - 1, origin) : input.Seek(offset, origin);
             hasPeek = false;
             return val;
         }
 
-        public override void SetLength(long value)
-        {
-            throw new NotSupportedException();
-        }
+        public override void SetLength(long value) => throw new NotSupportedException();
 
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            throw new NotSupportedException();
-        }
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 }
