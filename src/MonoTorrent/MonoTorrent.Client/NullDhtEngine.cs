@@ -30,6 +30,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using MonoTorrent.BEncoding;
 
 namespace MonoTorrent.Client
@@ -56,9 +57,9 @@ namespace MonoTorrent.Client
             
         }
 
-        public void Announce(InfoHash infohash, int port)
+        public async Task AnnounceAsync(InfoHash infohash, int port)
         {
-
+            await Task.CompletedTask;
         }
 
         public void Dispose()
@@ -66,9 +67,9 @@ namespace MonoTorrent.Client
 
         }
 
-        public void GetPeers(InfoHash infohash)
+        public async Task GetPeersAsync(InfoHash infohash)
         {
-
+            await Task.CompletedTask;
         }
 
         public byte[] SaveNodes()

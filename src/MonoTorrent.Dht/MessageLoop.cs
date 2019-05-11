@@ -78,7 +78,7 @@ namespace MonoTorrent.Dht
             this.engine = engine;
             this.listener = listener;
             listener.MessageReceived += new MessageReceived(MessageReceived);
-            DhtEngine.MainLoop.QueueTimeout(TimeSpan.FromMilliseconds(5), () =>
+            DhtEngine.MainLoop.QueueTimeoutAsync(TimeSpan.FromMilliseconds(5), async () =>
             {
                 if (engine.Disposed)
                 {
@@ -88,7 +88,7 @@ namespace MonoTorrent.Dht
                 try
                 {
                     SendMessage();
-                    ReceiveMessage();
+                    await ReceiveMessageAsync();
                     TimeoutMessage();
                 }
                 catch (Exception ex)
@@ -190,7 +190,7 @@ namespace MonoTorrent.Dht
             }
         }
 
-        private void ReceiveMessage()
+        private async Task ReceiveMessageAsync()
         {
             if (receiveQueue.Count == 0)
             {
@@ -221,7 +221,7 @@ namespace MonoTorrent.Dht
                     engine.RoutingTable.Add(node);
                 }
                 node.Seen();
-                m.Handle(engine, node);
+                await m.HandleAsync(engine, node);
                 ResponseMessage response = m as ResponseMessage;
                 if (response != null)
                 {

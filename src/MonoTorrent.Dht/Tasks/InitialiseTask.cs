@@ -53,7 +53,7 @@ namespace MonoTorrent.Dht.Tasks
             if (initialNodes.Count > 0)
             {
                 foreach (Node node in initialNodes)
-                    engine.Add(node);
+                    await engine.AddAsync(node);
                 await SendFindNode(initialNodes);
             }
             else

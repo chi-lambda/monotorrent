@@ -12,18 +12,18 @@ namespace MonoTorrent.Dht.Tasks
     class GetPeersTask
     {
         int activeQueries;
-    	NodeId infoHash;
-    	DhtEngine engine;
-        System.Threading.Tasks.TaskCompletionSource<Node[]> tcs = new System.Threading.Tasks.TaskCompletionSource<Node[]> ();
+        NodeId infoHash;
+        DhtEngine engine;
+        System.Threading.Tasks.TaskCompletionSource<Node[]> tcs = new System.Threading.Tasks.TaskCompletionSource<Node[]>();
 
         SortedList<NodeId, NodeId> ClosestNodes { get; }
         internal SortedList<NodeId, Node> ClosestActiveNodes { get; }
 
         public GetPeersTask(DhtEngine engine, InfoHash infohash)
             : this(engine, new NodeId(infohash))
-    	{
-    		
-    	}
+        {
+
+        }
 
         public GetPeersTask(DhtEngine engine, NodeId infohash)
         {
@@ -33,33 +33,36 @@ namespace MonoTorrent.Dht.Tasks
             this.ClosestActiveNodes = new SortedList<NodeId, Node>(Bucket.MaxCapacity * 2);
         }
 
-        public async Task<Node[]> Execute ()
+        public async Task<Node[]> Execute()
         {
-            var newNodes = engine.RoutingTable.GetClosest (infoHash);
+            var newNodes = engine.RoutingTable.GetClosest(infoHash);
             foreach (Node n in Node.CloserNodes(infoHash, ClosestNodes, newNodes, Bucket.MaxCapacity))
+            {
                 await SendGetPeers(n);
+            }
 
-            return ClosestActiveNodes.Values.ToArray ();
+            return ClosestActiveNodes.Values.ToArray();
         }
 
-        private async Task SendGetPeers (Node target)
+        private async Task SendGetPeers(Node target)
         {
             NodeId distance = target.Id.Xor(infoHash);
             ClosestActiveNodes.Add(distance, target);
 
             GetPeers m = new GetPeers(engine.LocalId, infoHash);
             activeQueries++;
-            var args = await engine.SendQueryAsync (m, target);
+            var args = await engine.SendQueryAsync(m, target);
             activeQueries--;
 
             // We want to keep a list of the top (K) closest nodes which have responded
-            int index = ClosestActiveNodes.Values.IndexOf (target);
+            int index = ClosestActiveNodes.Values.IndexOf(target);
             if (index >= Bucket.MaxCapacity || args.TimedOut)
-                ClosestActiveNodes.RemoveAt (index);
+                ClosestActiveNodes.RemoveAt(index);
 
-            if (args.TimedOut) {
+            if (args.TimedOut)
+            {
                 if (activeQueries == 0)
-                    tcs.TrySetResult (new Node[0]);
+                    tcs.TrySetResult(new Node[0]);
                 return;
             }
 
@@ -69,18 +72,21 @@ namespace MonoTorrent.Dht.Tasks
             // an additional copy in the routing table depending on whether or not
             // it was able to fit into the table.
             target.Token = response.Token;
-            if (response.Values != null) {
+            if (response.Values != null)
+            {
                 // We have actual peers!
-                engine.RaisePeersFound (infoHash, Peer.Decode (response.Values));
-            } else if (response.Nodes != null) {
+                engine.RaisePeersFound(infoHash, Peer.Decode(response.Values));
+            }
+            else if (response.Nodes != null)
+            {
                 // We got a list of nodes which are closer
-                IEnumerable<Node> newNodes = Node.FromCompactNode (response.Nodes);
-                foreach (Node closer in Node.CloserNodes (infoHash, ClosestNodes, newNodes, Bucket.MaxCapacity))
-                    await SendGetPeers (closer);
+                IEnumerable<Node> newNodes = Node.FromCompactNode(response.Nodes);
+                foreach (Node closer in Node.CloserNodes(infoHash, ClosestNodes, newNodes, Bucket.MaxCapacity))
+                    await SendGetPeers(closer);
             }
 
             if (activeQueries == 0)
-                tcs.TrySetResult (ClosestActiveNodes.Values.ToArray ());
+                tcs.TrySetResult(ClosestActiveNodes.Values.ToArray());
         }
     }
 }

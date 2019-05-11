@@ -13,6 +13,7 @@ using MonoTorrent.Client.Encryption;
 using MonoTorrent.Client.Tracker;
 using MonoTorrent.Dht;
 using MonoTorrent.Dht.Listeners;
+using System.Threading.Tasks;
 
 namespace MonoTorrent
 {
@@ -27,7 +28,7 @@ namespace MonoTorrent
         static List<TorrentManager> torrents;	// The list where all the torrentManagers will be stored that the engine gives us
         static Top10Listener listener;			// This is a subclass of TraceListener which remembers the last 20 statements sent to it
 
-        static void Main(string[] args)
+        static async void Main(string[] args)
         {
             /* Generate the paths to the folder we will save .torrent files to and where we download files to */
             basePath = Environment.CurrentDirectory;						// This is the directory we are currently in
@@ -45,10 +46,10 @@ namespace MonoTorrent
             AppDomain.CurrentDomain.UnhandledException += delegate(object sender, UnhandledExceptionEventArgs e) { Console.WriteLine(e.ExceptionObject); shutdown(); };
             Thread.GetDomain().UnhandledException += delegate(object sender, UnhandledExceptionEventArgs e) { Console.WriteLine(e.ExceptionObject); shutdown(); };
 
-            StartEngine();
+            await StartEngineAsync();
         }
 
-        private static void StartEngine()
+        private static async Task StartEngineAsync()
         {
             int port;
             Torrent torrent = null;
@@ -135,7 +136,7 @@ namespace MonoTorrent
                     TorrentManager manager = new TorrentManager(torrent, downloadsPath, torrentDefaults);
                     if (fastResume.ContainsKey(torrent.InfoHash.ToHex ()))
                         manager.LoadFastResume(new FastResume ((BEncodedDictionary)fastResume[torrent.InfoHash.ToHex ()]));
-                    engine.Register(manager);
+                    await engine.Register(manager);
 
                     // Store the torrent manager in our list so we can access it later
                     torrents.Add(manager);

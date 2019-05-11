@@ -95,7 +95,8 @@ namespace SampleClient.WPF
         public ViewModel(TraceListener listener)
         {
             torrentsPath = Path.Combine(basePath, "Torrents");
-            downloadsPath = Path.Combine(basePath, "Downloads");
+            //downloadsPath = Path.Combine(basePath, "Downloads");
+            downloadsPath = @"R:\\Downloads";
             fastResumeFile = Path.Combine(torrentsPath, "fastresume.data");
             dhtNodeFile = Path.Combine(basePath, "DhtNodes");
             this.listener = listener;
@@ -256,7 +257,6 @@ namespace SampleClient.WPF
             {
                 // While the torrents are still running, print out some stats to the screen.
                 // Details for all the loaded torrent managers are shown.
-                int i = 0;
                 bool running = true;
                 while (running)
                 {

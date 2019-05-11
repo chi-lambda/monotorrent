@@ -47,10 +47,10 @@ namespace MonoTorrent.Client
         }
 
         [TearDown]
-        public void Teardown()
+        public async Task TeardownAsync()
         {
             conn.Dispose();
-            rig.Engine.StopAll();
+            await rig.Engine.StopAll();
 
             for (int i = 0; i < 1000; i++)
             {
@@ -153,31 +153,31 @@ namespace MonoTorrent.Client
         }
 
         [Test]
-        public void EncrytorFactoryPeerAFullInitial()
+        public async Task EncrytorFactoryPeerAFullInitialAsync()
         {
-            PeerATest(EncryptionTypes.RC4Full, true);
+            await PeerATestAsync(EncryptionTypes.RC4Full, true);
         }
         [Test]
-        public void EncrytorFactoryPeerAFullNoInitial()
+        public async Task EncrytorFactoryPeerAFullNoInitialAsync()
         {
-            PeerATest(EncryptionTypes.RC4Full, false);
-        }
-
-        [Test]
-        public void EncrytorFactoryPeerAHeaderNoInitial()
-        {
-            PeerATest(EncryptionTypes.RC4Header, false);
-        }
-        [Test]
-        public void EncrytorFactoryPeerAHeaderInitial()
-        {
-            PeerATest(EncryptionTypes.RC4Header, true);
+            await PeerATestAsync(EncryptionTypes.RC4Full, false);
         }
 
         [Test]
-        public void EncryptorFactoryPeerAPlain()
+        public async Task EncrytorFactoryPeerAHeaderNoInitialAsync()
         {
-            rig.Engine.StartAll();
+            await PeerATestAsync(EncryptionTypes.RC4Header, false);
+        }
+        [Test]
+        public async Task EncrytorFactoryPeerAHeaderInitialAsync()
+        {
+            await PeerATestAsync(EncryptionTypes.RC4Header, true);
+        }
+
+        [Test]
+        public async Task EncryptorFactoryPeerAPlainAsync()
+        {
+            await rig.Engine.StartAll();
 
             rig.AddConnection(conn.Incoming);
 
@@ -192,23 +192,23 @@ namespace MonoTorrent.Client
         }
 
         [Test]
-        public void EncrytorFactoryPeerBFull()
+        public async Task EncrytorFactoryPeerBFullAsync()
         {
             rig.Engine.Settings.PreferEncryption = true;
-            PeerBTest(EncryptionTypes.RC4Full);
+            await PeerBTestAsync(EncryptionTypes.RC4Full);
         }
 
         [Test]
-        public void EncrytorFactoryPeerBHeader()
+        public async Task EncrytorFactoryPeerBHeaderAsync()
         {
             rig.Engine.Settings.PreferEncryption = false;
-            PeerBTest(EncryptionTypes.RC4Header);
+            await PeerBTestAsync(EncryptionTypes.RC4Header);
         }
 
-        private void PeerATest(EncryptionTypes encryption, bool addInitial)
+        private async Task PeerATestAsync(EncryptionTypes encryption, bool addInitial)
         {
             rig.Engine.Settings.AllowedEncryption = encryption;
-            rig.Engine.StartAll();
+            await rig.Engine.StartAll();
 
             HandshakeMessage message = new HandshakeMessage(rig.Manager.InfoHash, "ABC123ABC123ABC123AB", VersionInfo.ProtocolStringV100);
             byte[] buffer = message.Encode();
@@ -242,10 +242,10 @@ namespace MonoTorrent.Client
                 Assert.IsTrue(a.Encryptor is RC4Header);
         }
 
-        private void PeerBTest(EncryptionTypes encryption)
+        private async Task PeerBTestAsync(EncryptionTypes encryption)
         {
             rig.Engine.Settings.AllowedEncryption = encryption;
-            rig.Engine.StartAll();
+            await rig.Engine.StartAll();
             rig.AddConnection(conn.Outgoing);
 
             PeerBEncryption a = new PeerBEncryption(new InfoHash[] { rig.Manager.InfoHash }, EncryptionTypes.All);

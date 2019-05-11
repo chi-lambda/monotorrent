@@ -34,6 +34,7 @@ using System.Text;
 
 using MonoTorrent.BEncoding;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace MonoTorrent.Dht.Messages
 {
@@ -54,9 +55,9 @@ namespace MonoTorrent.Dht.Messages
 
         }
 
-        public override void Handle(DhtEngine engine, Node node)
+        public override async Task HandleAsync(DhtEngine engine, Node node)
         {
-            base.Handle(engine, node);
+            await base.HandleAsync(engine, node);
 
             PingResponse m = new PingResponse(engine.RoutingTable.LocalNode.Id, TransactionId);
             engine.MessageLoop.EnqueueSend(m, node.EndPoint);

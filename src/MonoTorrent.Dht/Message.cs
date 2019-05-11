@@ -34,6 +34,7 @@ using System.Collections.Generic;
 using MonoTorrent.BEncoding;
 using System.Net;
 using MonoTorrent.Common;
+using System.Threading.Tasks;
 
 namespace MonoTorrent.Dht.Messages
 {
@@ -106,9 +107,9 @@ namespace MonoTorrent.Dht.Messages
             return properties.Encode(buffer, offset);
         }
 
-        public virtual void Handle(DhtEngine engine, Node node)
+        public virtual async Task HandleAsync(DhtEngine engine, Node node)
         {
-            node.Seen();
+            await Task.Run(() => node.Seen());
         }
     }
 }

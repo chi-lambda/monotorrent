@@ -98,12 +98,14 @@ namespace MonoTorrent.Dht.Messages
 
         }
 
-        public override void Handle(DhtEngine engine, Node node)
+        public override async System.Threading.Tasks.Task HandleAsync(DhtEngine engine, Node node)
         {
-            base.Handle(engine, node);
+            await base.HandleAsync(engine, node);
             node.Token = Token;
             if (Nodes != null)
-                engine.Add(Node.FromCompactNode(Nodes));
+            {
+                await engine.AddAsync(Node.FromCompactNode(Nodes));
+            }
         }
     }
 }

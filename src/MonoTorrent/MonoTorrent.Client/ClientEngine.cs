@@ -217,7 +217,7 @@ namespace MonoTorrent.Client
             uploadLimiter = new RateLimiterGroup();
             uploadLimiter.Add(uploader);
 
-            ClientEngine.MainLoop.QueueTimeout(TimeSpan.FromSeconds(1), delegate {
+            MainLoop.QueueTimeout(TimeSpan.FromSeconds(1), delegate {
                 downloader.UpdateChunks(Settings.GlobalMaxDownloadSpeed, TotalDownloadSpeed);
                 uploader.UpdateChunks(Settings.GlobalMaxUploadSpeed, TotalUploadSpeed);
                 return !Disposed;
@@ -347,8 +347,8 @@ namespace MonoTorrent.Client
                     if (!manager.CanUseDht)
                         continue;
 
-                    DhtEngine.Announce (manager.InfoHash, Listener.Endpoint.Port);
-                    DhtEngine.GetPeers (manager.InfoHash);
+                    DhtEngine.AnnounceAsync (manager.InfoHash, Listener.Endpoint.Port);
+                    DhtEngine.GetPeersAsync (manager.InfoHash);
                 }
             });
         }

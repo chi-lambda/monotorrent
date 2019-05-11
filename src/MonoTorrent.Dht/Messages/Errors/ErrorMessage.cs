@@ -35,7 +35,7 @@ using System.Net;
 
 using MonoTorrent.BEncoding;
 using MonoTorrent.Dht;
-
+using System.Threading.Tasks;
 
 namespace MonoTorrent.Dht.Messages
 {
@@ -78,11 +78,9 @@ namespace MonoTorrent.Dht.Messages
 
         }
         
-        public override void Handle(DhtEngine engine, Node node)
+        public override async Task HandleAsync(DhtEngine engine, Node node)
         {
-            base.Handle(engine, node);
-
-            //throw new MessageException(ErrorCode, Message);
+            await base.HandleAsync(engine, node);
         }
     }
 }

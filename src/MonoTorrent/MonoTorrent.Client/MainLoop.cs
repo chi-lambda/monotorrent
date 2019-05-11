@@ -28,17 +28,19 @@
 
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using MonoTorrent.Common;
 
 namespace MonoTorrent.Client
 {
     public class MainLoop : SynchronizationContext, INotifyCompletion
     {
-        static readonly ICache<CacheableManualResetEventSlim> cache = new Cache<CacheableManualResetEventSlim> (true).Synchronize ();
+        static readonly ICache<CacheableManualResetEventSlim> cache = new Cache<CacheableManualResetEventSlim>(true).Synchronize();
 
         struct QueuedTask
         {
@@ -51,6 +53,8 @@ namespace MonoTorrent.Client
             public object State;
 
             public ManualResetEventSlim WaitHandle;
+
+            public static QueuedTask NullTask = new QueuedTask();
         }
 
         class CacheableManualResetEventSlim : ManualResetEventSlim, ICacheable
@@ -58,13 +62,14 @@ namespace MonoTorrent.Client
             public void Initialise() => Reset();
         }
 
-        readonly Queue<QueuedTask> actions = new Queue<QueuedTask> ();
-        readonly ManualResetEventSlim actionsWaiter = new ManualResetEventSlim ();
+        readonly ConcurrentQueue<QueuedTask> actions = new ConcurrentQueue<QueuedTask>();
+        readonly ManualResetEventSlim actionsWaiter = new ManualResetEventSlim();
         readonly Thread thread;
 
         public MainLoop(string name)
         {
-            thread = new Thread(Loop) {
+            thread = new Thread(Loop)
+            {
                 Name = name,
                 IsBackground = true
             };
@@ -73,21 +78,23 @@ namespace MonoTorrent.Client
 
         void Loop()
         {
-            SetSynchronizationContext (this);
+            SetSynchronizationContext(this);
             using (ExecutionContext.SuppressFlow())
                 while (true)
                 {
-                    QueuedTask? task = null;
+                    QueuedTask task = new QueuedTask();
+                    bool haveTask = false;
 
-                    lock (actions)
+                    if (actions.Count > 0)
                     {
-                        if (actions.Count > 0)
-                            task = actions.Dequeue();
-                        else
-                            actionsWaiter.Reset();
+                        haveTask = actions.TryDequeue(out task);
+                    }
+                    else
+                    {
+                        actionsWaiter.Reset();
                     }
 
-                    if (!task.HasValue)
+                    if (!haveTask)
                     {
                         actionsWaiter.Wait();
                     }
@@ -95,9 +102,9 @@ namespace MonoTorrent.Client
                     {
                         try
                         {
-                            task.Value.Action?.Invoke();
-                            task.Value.Callback?.Invoke(task.Value.CallbackResult);
-                            task.Value.SendOrPostCallback?.Invoke(task.Value.State);
+                            task.Action?.Invoke();
+                            task.Callback?.Invoke(task.CallbackResult);
+                            task.SendOrPostCallback?.Invoke(task.State);
                         }
                         catch (Exception ex)
                         {
@@ -105,7 +112,7 @@ namespace MonoTorrent.Client
                         }
                         finally
                         {
-                            task.Value.WaitHandle?.Set();
+                            task.WaitHandle?.Set();
                         }
                     }
                 }
@@ -113,12 +120,12 @@ namespace MonoTorrent.Client
 
         public void Queue(Action action)
         {
-            Queue (new QueuedTask { Action = action });
+            Queue(new QueuedTask { Action = action });
         }
 
         public void QueueWait(Action action)
         {
-            Send(t => action (), null);
+            Send(t => action(), null);
         }
 
         public object QueueWait(Func<object> func)
@@ -134,41 +141,67 @@ namespace MonoTorrent.Client
                 span = TimeSpan.FromMilliseconds(1);
             bool disposed = false;
             Timer timer = null;
-            SendOrPostCallback callback = state => {
-                if (!disposed && !task()) {
+            SendOrPostCallback callback = state =>
+            {
+                if (!disposed && !task())
+                {
                     disposed = true;
                     timer.Dispose();
                 }
             };
 
-            timer = new Timer(state => {
+            timer = new Timer(state =>
+            {
                 Post(callback, null);
             }, null, span, span);
         }
 
-        void Queue (QueuedTask task)
+        public void QueueTimeoutAsync(TimeSpan span, Func<Task<bool>> task)
         {
-            lock (actions) {
-                actions.Enqueue (task);
+            if (span.TotalMilliseconds < 1)
+                span = TimeSpan.FromMilliseconds(1);
+            bool disposed = false;
+            Timer timer = null;
+            SendOrPostCallback callback = async state =>
+            {
+                if (!disposed && !(await task()))
+                {
+                    disposed = true;
+                    timer.Dispose();
+                }
+            };
+
+            timer = new Timer(state =>
+            {
+                Post(callback, null);
+            }, null, span, span);
+        }
+
+        void Queue(QueuedTask task)
+        {
+            lock (actions)
+            {
+                actions.Enqueue(task);
                 if (actions.Count == 1)
-                    actionsWaiter.Set ();
+                    actionsWaiter.Set();
             }
         }
 
         public AsyncCallback Wrap(AsyncCallback callback)
         {
-            return delegate(IAsyncResult result) {
-                Queue (new QueuedTask { Callback = callback, CallbackResult = result });
+            return delegate (IAsyncResult result)
+            {
+                Queue(new QueuedTask { Callback = callback, CallbackResult = result });
             };
         }
 
-        [EditorBrowsable (EditorBrowsableState.Never)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public override void Post(SendOrPostCallback d, object state)
         {
-            Queue (new QueuedTask { SendOrPostCallback = d, State = state });
+            Queue(new QueuedTask { SendOrPostCallback = d, State = state });
         }
 
-        [EditorBrowsable (EditorBrowsableState.Never)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public override void Send(SendOrPostCallback d, object state)
         {
             if (thread == Thread.CurrentThread)
@@ -178,29 +211,29 @@ namespace MonoTorrent.Client
             else
             {
                 var waiter = cache.Dequeue();
-                Queue (new QueuedTask { SendOrPostCallback = d, State = state, WaitHandle = waiter });
+                Queue(new QueuedTask { SendOrPostCallback = d, State = state, WaitHandle = waiter });
                 waiter.Wait();
                 cache.Enqueue(waiter);
             }
         }
 
         #region If you await the MainLoop you'll swap to it's thread!
-        [EditorBrowsable (EditorBrowsableState.Never)]
-        public MainLoop GetAwaiter () => this;
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public MainLoop GetAwaiter() => this;
 
-        [EditorBrowsable (EditorBrowsableState.Never)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public bool IsCompleted => thread == Thread.CurrentThread;
 
-        [EditorBrowsable (EditorBrowsableState.Never)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public void GetResult()
         {
 
         }
 
-        [EditorBrowsable (EditorBrowsableState.Never)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public void OnCompleted(Action continuation)
         {
-            Queue (new QueuedTask { Action = continuation });
+            Queue(new QueuedTask { Action = continuation });
         }
         #endregion
     }

@@ -28,6 +28,7 @@
 
 
 using System;
+using System.Threading.Tasks;
 using MonoTorrent.BEncoding;
 
 namespace MonoTorrent
@@ -38,8 +39,8 @@ namespace MonoTorrent
         event EventHandler<PeersFoundEventArgs> PeersFound;
         byte[] SaveNodes();
         void Add(BEncodedList nodes);
-        void Announce(InfoHash infohash, int port);
-        void GetPeers(InfoHash infohash);
+        Task AnnounceAsync(InfoHash infohash, int port);
+        Task GetPeersAsync(InfoHash infohash);
         void Start();
         void Start(byte[] initialNodes);
         DhtState State { get; }

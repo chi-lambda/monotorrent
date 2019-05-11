@@ -119,7 +119,7 @@ namespace MonoTorrent.Dht
         }
 
         [Test]
-        public void BucketRefreshTest()
+        public async System.Threading.Tasks.Task BucketRefreshTestAsync()
         {
             List<Node> nodes = new List<Node>();
             for (int i = 0; i < 5; i++)
@@ -152,7 +152,7 @@ namespace MonoTorrent.Dht
                 });
             };
 
-            engine.Add(nodes);
+            await engine.AddAsync(nodes);
             engine.Start();
 
             System.Threading.Thread.Sleep(500);

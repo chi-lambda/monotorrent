@@ -26,7 +26,7 @@ namespace MonoTorrent
         static List<TorrentManager> torrents;	// The list where all the torrentManagers will be stored that the engine gives us
         static Top10Listener listener;			// This is a subclass of TraceListener which remembers the last 20 statements sent to it
 
-        static void Main(string[] args)
+        static async System.Threading.Tasks.Task Main(string[] args)
         {
             /* Generate the paths to the folder we will save .torrent files to and where we download files to */
             basePath = Environment.CurrentDirectory;						// This is the directory we are currently in
@@ -44,10 +44,10 @@ namespace MonoTorrent
             AppDomain.CurrentDomain.UnhandledException += delegate (object sender, UnhandledExceptionEventArgs e) { Console.WriteLine(e.ExceptionObject); shutdown(); };
             Thread.GetDomain().UnhandledException += delegate (object sender, UnhandledExceptionEventArgs e) { Console.WriteLine(e.ExceptionObject); shutdown(); };
 
-            StartEngine();
+            await StartEngineAsync();
         }
 
-        private static void StartEngine()
+        private static async System.Threading.Tasks.Task StartEngineAsync()
         {
             int port;
             Torrent torrent = null;
@@ -93,13 +93,6 @@ namespace MonoTorrent
             engine.RegisterDht(dht);
             dhtListner.Start();
             engine.DhtEngine.Start(nodes);
-
-            while (false) {
-                dht.PeersFound += (o, e) => Console.WriteLine(e.Peers.Count);
-                Console.ReadLine ();
-                var torrent111 = Torrent.Load(@"C:\Users\Alan\Desktop\monotorrent\build\Samples\Debug\Torrents\a.torrent");
-                dht.GetPeers (torrent111.InfoHash);
-            }
 
             // If the SavePath does not exist, we want to create it.
             if (!Directory.Exists(engine.Settings.SavePath))
@@ -149,7 +142,7 @@ namespace MonoTorrent
                         manager.LoadFastResume(new FastResume((BEncodedDictionary)fastResume[torrent.InfoHash.ToHex()]));
                     }
 
-                    engine.Register(manager);
+                    await engine.Register(manager);
 
                     // Store the torrent manager in our list so we can access it later
                     torrents.Add(manager);

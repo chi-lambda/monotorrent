@@ -34,6 +34,7 @@ using System.Text;
 
 using MonoTorrent.BEncoding;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace MonoTorrent.Dht.Messages
 {
@@ -74,23 +75,23 @@ namespace MonoTorrent.Dht.Messages
 
         }
 
-        public override void Handle(DhtEngine engine, Node node)
+        public override async Task HandleAsync(DhtEngine engine, Node node)
         {
-            base.Handle(engine, node);
+            await base.HandleAsync(engine, node);
 
             if (!engine.Torrents.ContainsKey(InfoHash))
                 engine.Torrents.Add(InfoHash, new List<Node>());
 
             Message response;
             if (engine.TokenManager.VerifyToken(node, Token))
-			{
+            {
                 engine.Torrents[InfoHash].Add(node);
-				response = new AnnouncePeerResponse(engine.RoutingTable.LocalNode.Id, TransactionId);
-		    }
-			else
-			    response = new ErrorMessage(ErrorCode.ProtocolError, "Invalid or expired token received");
-				
-			engine.MessageLoop.EnqueueSend(response, node.EndPoint);
+                response = new AnnouncePeerResponse(engine.RoutingTable.LocalNode.Id, TransactionId);
+            }
+            else
+                response = new ErrorMessage(ErrorCode.ProtocolError, "Invalid or expired token received");
+
+            engine.MessageLoop.EnqueueSend(response, node.EndPoint);
         }
     }
 }

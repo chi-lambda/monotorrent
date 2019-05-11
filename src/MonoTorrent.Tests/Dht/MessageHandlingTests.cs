@@ -35,9 +35,9 @@ namespace MonoTorrent.Dht
         }
 
         [Test]
-        public void SendPing()
+        public async System.Threading.Tasks.Task SendPingAsync()
         {
-            engine.Add(node);
+            await engine.AddAsync(node);
             engine.TimeOut = TimeSpan.FromMilliseconds(75);
             ManualResetEvent handle = new ManualResetEvent(false);
             engine.MessageLoop.QuerySent += delegate(object o, SendQueryEventArgs e) {

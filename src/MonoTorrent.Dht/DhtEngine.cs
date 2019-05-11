@@ -42,6 +42,7 @@ using MonoTorrent.Dht.Listeners;
 using MonoTorrent.Dht.Messages;
 using MonoTorrent.Client.Messages;
 using MonoTorrent.Dht.Tasks;
+using System.Threading.Tasks;
 
 namespace MonoTorrent.Dht
 {
@@ -161,28 +162,30 @@ namespace MonoTorrent.Dht
             task.Execute();
         }
 
-        internal void Add(IEnumerable<Node> nodes)
+        internal async Task AddAsync(IEnumerable<Node> nodes)
         {
             if (nodes == null)
                 throw new ArgumentNullException("nodes");
 
             foreach (Node n in nodes)
-                Add(n);
+            {
+                await AddAsync(n);
+            }
         }
 
-        internal void Add(Node node)
+        internal async Task AddAsync(Node node)
         {
             if (node == null)
                 throw new ArgumentNullException("node");
 
-            SendQueryAsync(new Ping(RoutingTable.LocalNode.Id), node);
+            await SendQueryAsync(new Ping(RoutingTable.LocalNode.Id), node);
         }
 
-        public void Announce(InfoHash infoHash, int port)
+        public async Task AnnounceAsync(InfoHash infoHash, int port)
         {
             CheckDisposed();
             Check.InfoHash(infoHash);
-            new AnnounceTask(this, infoHash, port).Execute();
+            await new AnnounceTask(this, infoHash, port).Execute();
         }
 
         void CheckDisposed()
@@ -202,11 +205,11 @@ namespace MonoTorrent.Dht
             });
         }
 
-        public void GetPeers(InfoHash infoHash)
+        public async Task GetPeersAsync(InfoHash infoHash)
         {
             CheckDisposed();
             Check.InfoHash(infoHash);
-            new GetPeersTask(this, infoHash).Execute();
+            await new GetPeersTask(this, infoHash).Execute();
         }
 
         internal void RaiseStateChanged(DhtState newState)
